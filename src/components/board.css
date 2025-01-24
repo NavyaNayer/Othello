@@ -1,0 +1,62 @@
+.board-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .board {
+    display: grid;
+    grid-template-columns: repeat(8, 50px);
+    grid-template-rows: repeat(8, 50px);
+  }
+  
+  .cell {
+    width: 50px;
+    height: 50px;
+    border: 1px solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  
+  .valid-move {
+    background-color: lightgreen;
+  }
+  
+  .piece {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+  
+  .B {
+    background-color: black;
+  }
+  
+  .W {
+    background-color: white;
+  }
+  
+  .regular {
+    border: 2px solid grey;
+  }
+  
+  .jumper {
+    border: 2px dashed blue;
+  }
+  
+  .blocker {
+    border: 2px solid red;
+  }
+  
+  .ducky-selection {
+    margin-top: 10px;
+  }
+  
+  .ducky-selection button {
+    margin: 5px;
+    padding: 10px;
+    font-size: 16px;
+  }
+  
