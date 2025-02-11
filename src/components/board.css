@@ -42,14 +42,6 @@
     border: 2px solid grey;
   }
   
-  .jumper {
-    border: 2px dashed blue;
-  }
-  
-  .blocker {
-    border: 2px solid red;
-  }
-  
   .ducky-selection {
     margin-top: 10px;
   }
@@ -59,4 +51,12 @@
     padding: 10px;
     font-size: 16px;
   }
-  
+
+.selected {
+  background-color: yellow; /* Highlight color */
+  border: 2px solid #000;  /* Optional: Add a border to make it more noticeable */
+}
+
+.shielded-piece {
+  border: 2px solid rgb(255, 0, 0);
+}
