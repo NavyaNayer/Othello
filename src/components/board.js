@@ -17,6 +17,22 @@ const Board = () => {
   const [currentPlayer, setCurrentPlayer] = useState('B');
   const [validMoves, setValidMoves] = useState([]);
   const [selectedDucky, setSelectedDucky] = useState('regular');
+  const [blackCount, setBlackCount] = useState(2);
+  const [whiteCount, setWhiteCount] = useState(2);
+  const [shieldedCells, setShieldedCells] = useState({ B: [], W: [] });
+
+  const calculatePieceCount = (board) => {
+    let black = 0;
+    let white = 0;
+    board.forEach(row => {
+      row.forEach(cell => {
+        if (cell.player === 'B') black++;
+        if (cell.player === 'W') white++;
+      });
+    });
+    setBlackCount(black);
+    setWhiteCount(white);
+  };
 
   const isValidMove = (board, row, col, player, type) => {
     if (board[row][col].player !== null) return false; // Cell must be empty
@@ -29,17 +45,12 @@ const Board = () => {
       let hasOpponentBetween = false;
 
       while (x >= 0 && x < 8 && y >= 0 && y < 8 && board[x][y].player === opponent) {
-        if (type === 'blocker') break; // Blocker stops the flipping process
         hasOpponentBetween = true;
         x += dx;
         y += dy;
       }
 
       if (hasOpponentBetween && x >= 0 && x < 8 && y >= 0 && y < 8 && board[x][y].player === player) {
-        valid = true;
-      }
-      if (type === 'jumper' && x >= 0 && x < 8 && y >= 0 && y < 8 && board[x][y].player === player) {
-        // Jumper can jump over a single opponent piece
         valid = true;
       }
     });
@@ -59,7 +70,7 @@ const Board = () => {
     setValidMoves(moves);
   };
 
-  const flipPieces = (board, row, col, player, type) => {
+  const flipPieces = (board, row, col, player, type, shieldedCells) => {
     const opponent = player === 'B' ? 'W' : 'B';
     const newBoard = board.map(row => row.slice());
 
@@ -69,7 +80,10 @@ const Board = () => {
       const piecesToFlip = [];
 
       while (x >= 0 && x < 8 && y >= 0 && y < 8 && board[x][y].player === opponent) {
-        piecesToFlip.push([x, y]);
+        // Skip shielded opponent's cells
+        if (!shieldedCells[opponent].some(([shieldRow, shieldCol]) => shieldRow === x && shieldCol === y)) {
+          piecesToFlip.push([x, y]);
+        }
         x += dx;
         y += dy;
       }
@@ -79,75 +93,105 @@ const Board = () => {
           newBoard[fx][fy] = { type: board[fx][fy].type, player };
         });
       }
-
-      if (type === 'jumper') {
-        // For jumper, flip the opponent's piece after the gap
-        const jumperPiecesToFlip = [];
-        x = row + dx;
-        y = col + dy;
-        let jumped = false;
-        while (x >= 0 && x < 8 && y >= 0 && y < 8) {
-          if (board[x][y].player === opponent) {
-            jumped = true;
-            x += dx;
-            y += dy;
-          } else if (jumped && board[x][y].player === player) {
-            jumperPiecesToFlip.push([x, y]);
-            break;
-          } else {
-            break;
-          }
-        }
-        jumperPiecesToFlip.forEach(([fx, fy]) => {
-          newBoard[fx][fy] = { type: board[fx][fy].type, player };
-        });
-      }
     });
 
     newBoard[row][col] = { type, player };
     return newBoard;
   };
 
-  const handleClick = (row, col) => {
-    if (!isValidMove(board, row, col, currentPlayer, selectedDucky)) return;
-
-    const newBoard = flipPieces(board, row, col, currentPlayer, selectedDucky);
-    setBoard(newBoard);
-    setCurrentPlayer(currentPlayer === 'B' ? 'W' : 'B');
+  const canGetShielded = (player, shieldedCells, row, col) => {
+    if (shieldedCells[player].length >= 1) {
+      alert('can only use one shield!');
+      return false;
+    }
+    const opponent = player === 'B' ? 'W' : 'B';
+    if (board[row][col].player === opponent) {
+      alert("Cannot shield opponent's cell!");
+      return false;
+    }
+    return true;
   };
 
   useEffect(() => {
     calculateValidMoves(board, currentPlayer);
   }, [board, currentPlayer]);
 
+  const handleClick = (row, col) => {
+    if (selectedDucky === 'shield' && !canGetShielded(currentPlayer, shieldedCells, row, col)) return;
+    if (!isValidMove(board, row, col, currentPlayer, selectedDucky)) return;
+
+    if (selectedDucky === 'shield') {
+      setShieldedCells((prev) => {
+        const newShielded = [...prev[currentPlayer], [row, col]];
+        console.log(`Shielded cells for ${currentPlayer}:`, newShielded);
+
+        // Set the board piece color for shielded cells
+        const newBoard = board.map((rowArr, rowIndex) => rowArr.map((cell, colIndex) => {
+          if (rowIndex === row && colIndex === col) {
+            return { type: 'shield', player: currentPlayer };
+          }
+          return cell;
+        }));
+        setBoard(newBoard);
+
+        // Change selected ducky back to 'regular' after placing a shield
+        setSelectedDucky('regular');
+
+        return { ...prev, [currentPlayer]: newShielded };
+      });
+    } else {
+      const newBoard = flipPieces(board, row, col, currentPlayer, selectedDucky, shieldedCells);
+      setBoard(newBoard);
+      calculatePieceCount(newBoard);
+    }
+
+    setCurrentPlayer(currentPlayer === 'B' ? 'W' : 'B');
+  };
+
   const renderCell = (row, col) => {
     const isValid = validMoves.some(([validRow, validCol]) => validRow === row && validCol === col);
+    const isShielded = shieldedCells[currentPlayer].some(([shieldRow, shieldCol]) => shieldRow === row && shieldCol === col);
     const piece = board[row][col];
+    const shieldClass = piece.type === 'shield'? 'shielded-piece': '';
 
     return (
-      <div
-        key={`${row}-${col}`}
-        className={`cell ${isValid ? 'valid-move' : ''}`}
-        onClick={() => handleClick(row, col)}
-      >
-        {piece.player && <div className={`piece ${piece.player} ${piece.type}`} />}
-      </div>
+        <div
+            key={`${row}-${col}`}
+            className={`cell ${isValid ? 'valid-move' : ''} ${isShielded ? 'shielded-cell' : ''}`}
+            onClick={() => handleClick(row, col)}
+        >
+          {piece.player && <div className={`piece ${piece.player} ${piece.type} ${shieldClass}`} />}
+        </div>
     );
   };
 
   return (
-    <div className="board-container">
-      <div className="board">
-        {board.map((row, rowIndex) =>
-          row.map((_, colIndex) => renderCell(rowIndex, colIndex))
-        )}
+      <div className="board-container">
+        <div className="board">
+          {board.map((row, rowIndex) =>
+              row.map((_, colIndex) => renderCell(rowIndex, colIndex))
+          )}
+        </div>
+        <div className="piece-count">
+          <div>Black: {blackCount}</div>
+          <div>White: {whiteCount}</div>
+        </div>
+        <div className="ducky-selection">
+          <button
+              onClick={() => setSelectedDucky('regular')}
+              className={selectedDucky === 'regular' ? 'selected' : ''}
+          >
+            Regular Ducky
+          </button>
+          <button
+              onClick={() => setSelectedDucky('shield')}
+              className={selectedDucky === 'shield' ? 'selected' : ''}
+          >
+            Shield Ducky
+          </button>
+        </div>
+
       </div>
-      <div className="ducky-selection">
-        <button onClick={() => setSelectedDucky('regular')}>Regular Ducky</button>
-        <button onClick={() => setSelectedDucky('jumper')}>Jumper Ducky</button>
-        <button onClick={() => setSelectedDucky('blocker')}>Blocker Ducky</button>
-      </div>
-    </div>
   );
 };
 
