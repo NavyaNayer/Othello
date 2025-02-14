@@ -60,3 +60,15 @@
 .shielded-piece {
   border: 2px solid rgb(255, 0, 0);
 }
+
+.bomb {
+  background-color: rgba(255, 0, 0, 0.5); /* Semi-transparent red for bomb */
+}
+
+.exploded {
+  background-color: rgba(0, 0, 255, 0.5); /* Blue for explosion */
+}
+
+.cell:hover {
+  background-color: rgba(0, 0, 0, 0.1); /* Slight hover effect for cells */
+}
