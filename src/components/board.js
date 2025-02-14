@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './board.css';
+import { placeBomb, triggerExplosion, checkForBomb } from '../logic/bomberLogic';
 
 const directions = [
   [0, 1], [1, 0], [0, -1], [-1, 0],
@@ -20,6 +21,8 @@ const Board = () => {
   const [blackCount, setBlackCount] = useState(2);
   const [whiteCount, setWhiteCount] = useState(2);
   const [shieldedCells, setShieldedCells] = useState({ B: [], W: [] });
+  const [selectedCell, setSelectedCell] = useState(null); // To highlight the cell where the bomb is placed
+  const [bombs, setBombs] = useState({ B: null, W: null });
 
   const calculatePieceCount = (board) => {
     let black = 0;
@@ -118,9 +121,20 @@ const Board = () => {
 
   const handleClick = (row, col) => {
     if (selectedDucky === 'shield' && !canGetShielded(currentPlayer, shieldedCells, row, col)) return;
-    if (!isValidMove(board, row, col, currentPlayer, selectedDucky)) return;
+    if (selectedDucky === 'bomb') {
+      // Handle bomb placement
+      if (bombs[currentPlayer] !== null) {
+        alert('You can only place one bomb per game!');
+        return;
+      }
+      const newBombs = { ...bombs, [currentPlayer]: [row, col] };
+      setBombs(newBombs);
 
-    if (selectedDucky === 'shield') {
+      const newBoard = board.map(rowArr => rowArr.slice());
+      newBoard[row][col] = { type: 'bomb', player: currentPlayer }; // Place bomb on board
+      setBoard(newBoard);
+
+    } else if (selectedDucky === 'shield') {
       setShieldedCells((prev) => {
         const newShielded = [...prev[currentPlayer], [row, col]];
         console.log(`Shielded cells for ${currentPlayer}:`, newShielded);
@@ -145,6 +159,11 @@ const Board = () => {
       calculatePieceCount(newBoard);
     }
 
+    // Check for bomb explosion
+    if (bombs[currentPlayer] && [row, col].toString() === bombs[currentPlayer].toString()) {
+      triggerExplosion(row, col, currentPlayer, board, setBoard); // Trigger explosion if bomb is stepped on
+    }
+
     setCurrentPlayer(currentPlayer === 'B' ? 'W' : 'B');
   };
 
@@ -153,6 +172,7 @@ const Board = () => {
     const isShielded = shieldedCells[currentPlayer].some(([shieldRow, shieldCol]) => shieldRow === row && shieldCol === col);
     const piece = board[row][col];
     const shieldClass = piece.type === 'shield'? 'shielded-piece': '';
+    const bombClass = piece.type === 'bomb' ? 'bomb-cell' : '';
 
     return (
         <div
@@ -189,6 +209,12 @@ const Board = () => {
           >
             Shield Ducky
           </button>
+          <button
+          onClick={() => setSelectedDucky('bomb')}
+          className={selectedDucky === 'bomb' ? 'selected' : ''}
+        >
+          Bomber Ducky
+        </button>
         </div>
 
       </div>
