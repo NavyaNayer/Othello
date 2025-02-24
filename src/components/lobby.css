@@ -1,4 +1,4 @@
-.landing-page {
+.lobby {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -8,12 +8,12 @@
   text-align: center;
 }
 
-.landing-page h1 {
+.lobby h1 {
   font-size: 3em;
   margin-bottom: 20px;
 }
 
-.landing-page input {
+.lobby input {
   padding: 10px;
   font-size: 1.2em;
   margin-bottom: 10px;
@@ -21,7 +21,7 @@
   border-radius: 5px;
 }
 
-.landing-page button {
+.lobby button {
   padding: 15px 30px;
   font-size: 1.5em;
   background-color: #ffcc00;
@@ -32,29 +32,7 @@
   margin: 5px;
 }
 
-.landing-page button:hover {
-  background-color: #ffaa00;
-  border-color: #ff7700;
-  transform: scale(1.1);
-}
-
-.game-code {
-  margin-top: 20px;
-  font-size: 1.5em;
-}
-
-.game-code button {
-  margin-top: 10px;
-  padding: 10px 20px;
-  font-size: 1em;
-  background-color: #ffcc00;
-  border: 2px solid #ff9900;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-
-.game-code button:hover {
+.lobby button:hover {
   background-color: #ffaa00;
   border-color: #ff7700;
   transform: scale(1.1);

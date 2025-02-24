@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import io from 'socket.io-client';
 import './board.css';
 import { placeBomb, triggerExplosion, checkForBomb } from '../logic/bomberLogic';
+
+const socket = io('http://localhost:3000'); // Ensure this points to the backend server
+
+socket.on('connect', () => {
+  console.log('Connected to server:', socket.id);
+});
+
+socket.on('disconnect', () => {
+  console.log('Disconnected from server');
+});
 
 const directions = [
   [0, 1], [1, 0], [0, -1], [-1, 0],
@@ -14,7 +25,7 @@ initialBoard[3][4] = { type: 'regular', player: 'B' };
 initialBoard[4][3] = { type: 'regular', player: 'B' };
 initialBoard[4][4] = { type: 'regular', player: 'W' };
 
-const Board = ({ playerColor }) => {
+const Board = () => {
   const { gameCode } = useParams();
   const [board, setBoard] = useState(initialBoard);
   const [currentPlayer, setCurrentPlayer] = useState('B');
@@ -27,6 +38,30 @@ const Board = ({ playerColor }) => {
   const [bombs, setBombs] = useState({ B: null, W: null });
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState(null);
+  const [assignedColor, setAssignedColor] = useState(null); // Store assigned color
+
+  useEffect(() => {
+    console.log('Joining game:', gameCode);
+    socket.emit('joinGame', { gameCode });
+
+    socket.on('assignedColor', (color) => {
+      setAssignedColor(color);
+      console.log(`Assigned color: ${color}`);
+    });
+
+    socket.on('gameState', (gameState) => {
+      console.log('Received game state:', gameState);
+      setBoard(gameState.board);
+      setCurrentPlayer(gameState.currentPlayer);
+      calculatePieceCount(gameState.board);
+      calculateValidMoves(gameState.board, gameState.currentPlayer);
+    });
+
+    return () => {
+      socket.off('assignedColor');
+      socket.off('gameState');
+    };
+  }, [gameCode]);
 
   const calculatePieceCount = (board) => {
     let black = 0;
@@ -153,8 +188,13 @@ const Board = ({ playerColor }) => {
   }, [board, currentPlayer]);
 
   const handleClick = (row, col) => {
+    console.log(`handleClick: row=${row}, col=${col}, currentPlayer=${currentPlayer}, assignedColor=${assignedColor}`);
     if (board[row][col].player !== null) {
       alert('This cell is already occupied!');
+      return;
+    }
+    if (currentPlayer !== assignedColor) {
+      alert(`It's not your turn! You are playing as ${assignedColor}.`);
       return;
     }
     const isValid = validMoves.some(([validRow, validCol]) => validRow === row && validCol === col);
@@ -207,6 +247,7 @@ const Board = ({ playerColor }) => {
     }
 
     setCurrentPlayer(currentPlayer === 'B' ? 'W' : 'B');
+    socket.emit('makeMove', { gameCode, move: { row, col, player: currentPlayer, type: selectedDucky } });
   };
 
   const renderCell = (row, col) => {
