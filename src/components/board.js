@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import './board.css';
 import { placeBomb, triggerExplosion, checkForBomb } from '../logic/bomberLogic';
 
@@ -13,7 +14,8 @@ initialBoard[3][4] = { type: 'regular', player: 'B' };
 initialBoard[4][3] = { type: 'regular', player: 'B' };
 initialBoard[4][4] = { type: 'regular', player: 'W' };
 
-const Board = () => {
+const Board = ({ playerColor }) => {
+  const { gameCode } = useParams();
   const [board, setBoard] = useState(initialBoard);
   const [currentPlayer, setCurrentPlayer] = useState('B');
   const [validMoves, setValidMoves] = useState([]);
@@ -23,6 +25,8 @@ const Board = () => {
   const [shieldedCells, setShieldedCells] = useState({ B: [], W: [] });
   const [selectedCell, setSelectedCell] = useState(null); // To highlight the cell where the bomb is placed
   const [bombs, setBombs] = useState({ B: null, W: null });
+  const [gameOver, setGameOver] = useState(false);
+  const [winner, setWinner] = useState(null);
 
   const calculatePieceCount = (board) => {
     let black = 0;
@@ -115,11 +119,49 @@ const Board = () => {
     return true;
   };
 
+  const checkGameOver = (board) => {
+    const isBoardFull = board.every(row => row.every(cell => cell.player !== null));
+    if (isBoardFull) {
+      setGameOver(true);
+      if (blackCount > whiteCount) {
+        setWinner('Black');
+      } else if (whiteCount > blackCount) {
+        setWinner('White');
+      } else {
+        setWinner('Draw');
+      }
+    }
+  };
+
+  const restartGame = () => {
+    setBoard(initialBoard);
+    setCurrentPlayer('B');
+    setValidMoves([]);
+    setSelectedDucky('regular');
+    setBlackCount(2);
+    setWhiteCount(2);
+    setShieldedCells({ B: [], W: [] });
+    setSelectedCell(null);
+    setBombs({ B: null, W: null });
+    setGameOver(false);
+    setWinner(null);
+  };
+
   useEffect(() => {
     calculateValidMoves(board, currentPlayer);
+    checkGameOver(board);
   }, [board, currentPlayer]);
 
   const handleClick = (row, col) => {
+    if (board[row][col].player !== null) {
+      alert('This cell is already occupied!');
+      return;
+    }
+    const isValid = validMoves.some(([validRow, validCol]) => validRow === row && validCol === col);
+    if (!isValid) {
+      alert('This is not a valid move!');
+      return;
+    }
     if (selectedDucky === 'shield' && !canGetShielded(currentPlayer, shieldedCells, row, col)) return;
     if (selectedDucky === 'bomb') {
       // Handle bomb placement
@@ -187,7 +229,14 @@ const Board = () => {
 
   return (
       <div className="board-container">
-        <div className="board">
+        {gameOver && (
+          <div className="game-over">
+            <h2>Game Over</h2>
+            <p>{winner === 'Draw' ? "It's a Draw!" : `${winner} Wins!`}</p>
+            <button onClick={restartGame}>Restart Game</button>
+          </div>
+        )}
+        <div className={`board ${gameOver ? 'disabled' : ''}`}>
           {board.map((row, rowIndex) =>
               row.map((_, colIndex) => renderCell(rowIndex, colIndex))
           )}

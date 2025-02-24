@@ -7,6 +7,7 @@
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    position: relative;
   }
   
   .board {
@@ -141,5 +142,40 @@
 .selected {
   background-color: yellow;
   border: 3px solid black;
+}
+
+.game-over {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border: 2px solid #000;
+  text-align: center;
+  z-index: 10;
+}
+
+.game-over button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #ffcc00;
+  border: 2px solid #ff9900;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.game-over button:hover {
+  background-color: #ffaa00;
+  border-color: #ff7700;
+  transform: scale(1.1);
+}
+
+.board.disabled {
+  pointer-events: none;
+  opacity: 0.5;
 }
 
