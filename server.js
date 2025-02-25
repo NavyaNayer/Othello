@@ -28,6 +28,40 @@ const getInitialBoard = () => {
 
 const games = {};
 
+const directions = [
+  [0, 1], [1, 0], [0, -1], [-1, 0],
+  [-1, -1], [-1, 1], [1, -1], [1, 1]
+];
+
+const flipPieces = (board, row, col, player, type, shieldedCells) => {
+    const opponent = player === 'B' ? 'W' : 'B';
+    const newBoard = board.map(row => row.slice());
+  
+    directions.forEach(([dx, dy]) => {
+      let x = row + dx;
+      let y = col + dy;
+      const piecesToFlip = [];
+  
+      while (x >= 0 && x < 8 && y >= 0 && y < 8 && board[x][y].player === opponent) {
+        // Skip shielded opponent's cells
+        if (!shieldedCells[opponent].some(([shieldRow, shieldCol]) => shieldRow === x && shieldCol === y)) {
+          piecesToFlip.push([x, y]);
+        }
+        x += dx;
+        y += dy;
+      }
+  
+      if (piecesToFlip.length > 0 && x >= 0 && x < 8 && y >= 0 && y < 8 && board[x][y].player === player) {
+        piecesToFlip.forEach(([fx, fy]) => {
+          newBoard[fx][fy] = { type: board[fx][fy].type, player };
+        });
+      }
+    });
+  
+    newBoard[row][col] = { type, player };
+    return newBoard;
+  };
+
 io.on("connection", (socket) => {
     console.log(`✅ A user connected: ${socket.id}`);
 
@@ -90,7 +124,7 @@ io.on("connection", (socket) => {
         }
 
         // Update board
-        game.board[row][col] = { type, player };
+        game.board = flipPieces(game.board, row, col, player, type, { B: [], W: [] });
         game.currentPlayer = player === 'B' ? 'W' : 'B';
 
         io.to(gameCode).emit('gameState', game);

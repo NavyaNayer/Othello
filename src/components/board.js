@@ -130,7 +130,7 @@ const Board = () => {
         y += dy;
       }
 
-      if (x >= 0 && x < 8 && y >= 0 && y < 8 && board[x][y].player === player) {
+      if (piecesToFlip.length > 0 && x >= 0 && x < 8 && y >= 0 && y < 8 && board[x][y].player === player) {
         piecesToFlip.forEach(([fx, fy]) => {
           newBoard[fx][fy] = { type: board[fx][fy].type, player };
         });
