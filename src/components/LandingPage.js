@@ -5,6 +5,7 @@ import './landingPage.css';
 const LandingPage = ({ setGameCode, setPlayerColor }) => {
   const [code, setCode] = useState('');
   const [createdCode, setCreatedCode] = useState('');
+  const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
 
   const createGame = () => {
@@ -12,6 +13,7 @@ const LandingPage = ({ setGameCode, setPlayerColor }) => {
     setGameCode(newCode);
     setPlayerColor('B');
     setCreatedCode(newCode);
+    setCopied(false); // Reset copied state
   };
 
   const joinGame = () => {
@@ -22,7 +24,7 @@ const LandingPage = ({ setGameCode, setPlayerColor }) => {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(createdCode);
-    alert('Game code copied to clipboard!');
+    setCopied(true);
   };
 
   const startGame = () => {
@@ -30,24 +32,29 @@ const LandingPage = ({ setGameCode, setPlayerColor }) => {
   };
 
   return (
-    <div className="landing-page">
-      <h1>Welcome to Othello with Duckies</h1>
-      <button onClick={createGame}>Create Game</button>
-      {createdCode && (
-        <div className="game-code">
-          <p>Game Code: {createdCode}</p>
-          <button onClick={copyToClipboard}>Copy Code</button>
-          <button onClick={startGame}>Start Game</button>
-        </div>
-      )}
-      <input
-        type="text"
-        placeholder="Enter game code"
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-      />
-      <button onClick={joinGame}>Join Game</button>
-    </div>
+      <div className="landing-page">
+        <h1>Welcome to Othello with Duckies</h1>
+        <button onClick={createGame}>Create Game</button>
+        {createdCode && (
+            <div className="game-code">
+              <p>Game Code: {createdCode}</p>
+              <button
+                  onClick={copyToClipboard}
+                  style={{ backgroundColor: copied ? 'green' : '' }}
+              >
+                {copied ? 'Copied!' : 'Copy Code'}
+              </button>
+              <button onClick={startGame}>Start Game</button>
+            </div>
+        )}
+        <input
+            type="text"
+            placeholder="Enter game code"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+        />
+        <button onClick={joinGame}>Join Game</button>
+      </div>
   );
 };
 

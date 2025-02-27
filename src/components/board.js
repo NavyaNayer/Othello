@@ -141,14 +141,34 @@ const Board = () => {
     return newBoard;
   };
 
+  const showNotification = (message) => {
+    // Remove existing notification if any
+    const existingBox = document.querySelector('.notification-box');
+    if (existingBox) {
+      existingBox.remove();
+    }
+
+    // Create the notification box
+    const notificationBox = document.createElement('div');
+    notificationBox.classList.add('notification-box');
+    notificationBox.innerText = message;
+    document.body.appendChild(notificationBox);
+
+    // Remove the box after 2.5 seconds with fade-out effect
+    setTimeout(() => {
+      notificationBox.classList.add('fade-out');
+      setTimeout(() => notificationBox.remove(), 500);
+    }, 2000);
+  };
+
   const canGetShielded = (player, shieldedCells, row, col) => {
     if (shieldedCells[player].length >= 1) {
-      alert('can only use one shield!');
+      showNotification('Can only use one shield!');
       return false;
     }
     const opponent = player === 'B' ? 'W' : 'B';
     if (board[row][col].player === opponent) {
-      alert("Cannot shield opponent's cell!");
+      showNotification("Cannot shield opponent's cell!");
       return false;
     }
     return true;
@@ -190,23 +210,23 @@ const Board = () => {
   const handleClick = (row, col) => {
     console.log(`handleClick: row=${row}, col=${col}, currentPlayer=${currentPlayer}, assignedColor=${assignedColor}`);
     if (board[row][col].player !== null) {
-      alert('This cell is already occupied!');
+      showNotification("This cell is already occupied!");
       return;
     }
     if (currentPlayer !== assignedColor) {
-      alert(`It's not your turn! You are playing as ${assignedColor}.`);
+      showNotification("Opponent's turn!");
       return;
     }
     const isValid = validMoves.some(([validRow, validCol]) => validRow === row && validCol === col);
     if (!isValid) {
-      alert('This is not a valid move!');
+      showNotification("This is not a valid move!");
       return;
     }
     if (selectedDucky === 'shield' && !canGetShielded(currentPlayer, shieldedCells, row, col)) return;
     if (selectedDucky === 'bomb') {
       // Handle bomb placement
       if (bombs[currentPlayer] !== null) {
-        alert('You can only place one bomb per game!');
+        showNotification("You can only place one bomb per game!");
         return;
       }
       const newBombs = { ...bombs, [currentPlayer]: [row, col] };
@@ -257,13 +277,32 @@ const Board = () => {
     const shieldClass = piece.type === 'shield'? 'shielded-piece': '';
     const bombClass = piece.type === 'bomb' ? 'bomb-cell' : '';
 
+    let imageSrc = '';
+    if (piece.player === 'B') {
+      if(piece.type === 'regular'){
+        imageSrc = '/images/blue_duckie.png';
+      } else if (piece.type === 'shield') {
+        imageSrc = '/images/blue_shield_duckie.png';
+      } else if (piece.type === 'bomb') {
+        imageSrc = '/images/blue_bomb_duckie.png';
+      }
+    } else {
+      if(piece.type === 'regular'){
+        imageSrc = '/images/red_duckie.png';
+      } else if (piece.type === 'shield') {
+        imageSrc = '/images/red_shield_duckie.png';
+      } else if (piece.type === 'bomb') {
+        imageSrc = '/images/red_bomb_duckie.png';
+      }
+    }
+
     return (
         <div
             key={`${row}-${col}`}
-            className={`cell ${isValid ? 'valid-move' : ''} ${isShielded ? 'shielded-cell' : ''}`}
+            className={`cell ${isValid ? 'valid-move' : ''}`}
             onClick={() => handleClick(row, col)}
         >
-          {piece.player && <div className={`piece ${piece.player} ${piece.type} ${shieldClass}`} />}
+          {imageSrc && <img src={imageSrc} alt={piece.type} className="piece-image" />}
         </div>
     );
   };
@@ -291,20 +330,25 @@ const Board = () => {
               onClick={() => setSelectedDucky('regular')}
               className={selectedDucky === 'regular' ? 'selected' : ''}
           >
-            Regular Ducky
+            <p className="button-text"> Regular Ducky </p>
+            <img className="button-img" src="/images/red_duckie.png" alt="Regular Ducky"/>
           </button>
+
           <button
               onClick={() => setSelectedDucky('shield')}
               className={selectedDucky === 'shield' ? 'selected' : ''}
           >
-            Shield Ducky
+            <p className="button-text"> Shield Ducky</p>
+            <img className="button-img" src="/images/red_shield_duckie.png" alt="Shield Ducky"/>
           </button>
+
           <button
-          onClick={() => setSelectedDucky('bomb')}
-          className={selectedDucky === 'bomb' ? 'selected' : ''}
-        >
-          Bomber Ducky
-        </button>
+              onClick={() => setSelectedDucky('bomb')}
+              className={selectedDucky === 'bomb' ? 'selected' : ''}
+          >
+            <p className="button-text"> Bomber Ducky</p>
+            <img className="button-img" src="/images/red_bomb_duckie.png" alt="Bomber Ducky"/>
+          </button>
         </div>
 
       </div>

@@ -37,3 +37,8 @@
   border-color: #ff7700;
   transform: scale(1.1);
 }
+
+.copied-button {
+  background-color: green;
+  color: white;
+}
