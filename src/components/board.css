@@ -1,99 +1,87 @@
 .board-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px; 
-    background-color: #f4f4f4;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-    position: relative;
-  }
-  
-  .board {
-    display: grid;
-    grid-template-columns: repeat(8, 50px);
-    grid-template-rows: repeat(8, 50px);
-    border: 3px solid rgb(34, 40, 91); 
-    background-color: #8bd4e5;
-    border-radius: 5px;
-  }
-  
-  .cell {
-    width: 50px;
-    height: 50px;
-    border: 1px solid #077e99;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border-radius: 20%;
-    transition: background-color 0.2s ease-in-out;
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  background-color: #f4f4f4;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
 
-  .cell:hover {
-    background-color: rgba(255, 255, 255, 0.2); 
-  }
+.board {
+  display: grid;
+  padding: 2px;
+  grid-template-columns: repeat(8, 50px);
+  grid-template-rows: repeat(8, 50px);
+  border: 3px solid rgb(34, 40, 91);
+  background-color: #8bd4e5;
+  border-radius: 5px;
+}
 
-  .valid-move {
-    background-color: #6892d2; 
-    border-radius: 8px;
-    box-shadow: inset 0px 0px 8px rgba(0, 255, 0, 0.5);
-  }
+.cell {
+  width: 50px;
+  height: 50px;
+  border: 1px solid #077e99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 20%;
+  transition: background-color 0.2s ease-in-out;
+}
 
-  .piece {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    transition: transform 0.2s ease-in-out;
-  }
+.cell:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
 
-  .piece:hover {
-    transform: scale(1.1);
-  }
+.valid-move {
+  background-color: #6892d2;
+  border-radius: 8px;
+  box-shadow: inset 0px 0px 8px rgba(0, 255, 0, 0.5);
+}
 
-  .B {
-    background-color: black;
-    box-shadow: inset 0px 0px 10px rgba(255, 255, 255, 0.3);
-  }
-  
-  .W {
-    background-color: white;
-    box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.3);
-  }
-  
-  .regular {
-    border: 2px solid grey;
-  }
-  
-  .shielded-piece {
-    border: 3px solid rgb(255, 0, 0);
-    animation: shield-glow 1s infinite alternate;
-  }
-  
-  
-  .ducky-selection {
-    margin-top: 10px;
-  }
-  
-  .ducky-selection button {
-    margin: 5px;
-    padding: 10px;
-    font-size: 16px;
-  }
+.piece {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: transform 0.2s ease-in-out;
+}
+
+.piece:hover {
+  transform: scale(1.1);
+}
+
+.B {
+  background-color: black;
+  box-shadow: inset 0px 0px 10px rgba(255, 255, 255, 0.3);
+}
+
+.R {
+  background-color: white;
+  box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.3);
+}
+
+.regular {
+  border: 2px solid grey;
+}
+
+.ducky-selection {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.ducky-selection button {
+  margin: 5px;
+  padding: 10px;
+  font-size: 16px;
+}
 
 .selected {
-  background-color: yellow; 
-  border: 2px solid #000;  
-}
-
-.shielded-piece {
-  border: 2px solid rgb(255, 0, 0);
-}
-
-@keyframes shield-glow {
-  0% { border-color: rgba(255, 0, 0, 0.7); }
-  100% { border-color: rgba(255, 100, 100, 1); }
+  background-color: yellow;
+  border: 2px solid #000;
 }
 
 .bomb {
@@ -116,21 +104,11 @@
   100% { background-color: rgba(0, 0, 255, 0.6); }
 }
 
-.ducky-selection {
-  margin-top: 15px;
-  display: flex;
-  gap: 10px;
-}
 
 .ducky-selection button:hover {
   background-color: #ffaa00;
   border-color: #ff7700;
   transform: scale(1.1);
-}
-
-.selected {
-  background-color: yellow;
-  border: 3px solid black;
 }
 
 .game-over {
@@ -209,6 +187,17 @@
   object-fit: contain;
 }
 
+.piece-count {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.piece-count div {
+  display: flex;
+  align-items: center;
+}
+
 .ducky-selection button {
   padding: 12px 18px;
   font-size: 16px;
@@ -224,12 +213,23 @@
   gap: 10px; /* Adds spacing between text and image */
 }
 
-.button-img {
-  height: 30px;
-  width: 30px;
+.duckie-img {
+  height: 50px;
+  width: 50px;
 }
 
 .button-text {
   display: flex;
   align-items: center;
+}
+
+.ducky-selection button.disabled {
+  background-color: #d3d3d3; /* Faded background */
+  border-color: #a9a9a9;
+  opacity: 0.6;
+  /*pointer-events: none;*/
+}
+
+.ducky-selection button.disabled:hover {
+  cursor: url(../../public/images/disabled_cursor.png), none;
 }
