@@ -44,6 +44,10 @@ const Board = () => {
     console.log('Joining game:', gameCode);
     socket.emit('joinGame', { gameCode });
 
+    if (gameCode === 'computer') {
+      setAssignedColor('B');
+    }
+
     socket.on('assignedColor', (color) => {
       setAssignedColor(color);
       console.log(`Assigned color: ${color}`);
@@ -54,7 +58,7 @@ const Board = () => {
       setBoard(gameState.board);
       setCurrentPlayer(gameState.currentPlayer);
       calculatePieceCount(gameState.board);
-      calculateValidMoves(gameState.board, gameState.currentPlayer);
+      setValidMoves(calculateValidMoves(gameState.board, gameState.currentPlayer));
     });
 
     return () => {
@@ -109,7 +113,7 @@ const Board = () => {
         }
       });
     });
-    setValidMoves(moves);
+    return moves; // Return the array of valid moves
   };
 
   const flipPieces = (board, row, col, player, type, shieldedCells) => {
@@ -203,9 +207,30 @@ const Board = () => {
   };
 
   useEffect(() => {
-    calculateValidMoves(board, currentPlayer);
+    setValidMoves(calculateValidMoves(board, currentPlayer));
     checkGameOver(board);
   }, [board, currentPlayer]);
+
+  const makeComputerMove = () => {
+    const validMoves = calculateValidMoves(board, 'W');
+    if (validMoves.length > 0) {
+      const [row, col] = validMoves[Math.floor(Math.random() * validMoves.length)];
+      const newBoard = flipPieces(board, row, col, 'W', 'regular', shieldedCells);
+      setBoard(newBoard);
+      calculatePieceCount(newBoard);
+      setCurrentPlayer('B');
+    } else {
+      // No valid moves for computer, pass turn back to player
+      setCurrentPlayer('B');
+      showNotification("Computer has no valid moves, your turn again!");
+    }
+  };
+
+  useEffect(() => {
+    if (gameCode === 'computer' && currentPlayer === 'W') {
+      setTimeout(makeComputerMove, 1000); // Delay for computer move
+    }
+  }, [currentPlayer, gameCode]);
 
   const handleClick = (row, col) => {
     console.log(`handleClick: row=${row}, col=${col}, currentPlayer=${currentPlayer}, assignedColor=${assignedColor}`);
@@ -214,6 +239,10 @@ const Board = () => {
       return;
     }
     if (currentPlayer !== assignedColor) {
+      showNotification("Opponent's turn!");
+      return;
+    }
+    if (gameCode === 'computer' && currentPlayer === 'W') {
       showNotification("Opponent's turn!");
       return;
     }
@@ -266,7 +295,13 @@ const Board = () => {
       triggerExplosion(row, col, currentPlayer, board, setBoard); // Trigger explosion if bomb is stepped on
     }
 
-    setCurrentPlayer(currentPlayer === 'B' ? 'W' : 'B');
+    const nextPlayer = currentPlayer === 'B' ? 'W' : 'B';
+    const nextValidMoves = calculateValidMoves(board, nextPlayer);
+    if (nextValidMoves.length > 0) {
+      setCurrentPlayer(nextPlayer);
+    } else {
+      showNotification(`${nextPlayer === 'B' ? 'Black' : 'White'} has no valid moves, your turn again!`);
+    }
     socket.emit('makeMove', { gameCode, move: { row, col, player: currentPlayer, type: selectedDucky } });
   };
 

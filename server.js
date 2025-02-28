@@ -62,6 +62,33 @@ const flipPieces = (board, row, col, player, type, shieldedCells) => {
     return newBoard;
   };
 
+const calculateValidMoves = (board, player) => {
+  const moves = [];
+  board.forEach((row, rowIndex) => {
+    row.forEach((cell, colIndex) => {
+      if (isValidMove(board, rowIndex, colIndex, player, 'regular')) {
+        moves.push([rowIndex, colIndex]);
+      }
+    });
+  });
+  return moves; // Return the array of valid moves
+};
+
+const makeComputerMove = (game) => {
+  const validMoves = calculateValidMoves(game.board, 'W');
+  if (validMoves.length > 0) {
+    const [row, col] = validMoves[Math.floor(Math.random() * validMoves.length)];
+    game.board = flipPieces(game.board, row, col, 'W', 'regular', { B: [], W: [] });
+    game.currentPlayer = 'B';
+    io.to(game.gameCode).emit('gameState', game); // Emit game state after computer move
+  } else {
+    // No valid moves for computer, pass turn back to player
+    game.currentPlayer = 'B';
+    io.to(game.gameCode).emit('gameState', game);
+    io.to(game.gameCode).emit('notification', "Computer has no valid moves, your turn again!");
+  }
+};
+
 io.on("connection", (socket) => {
     console.log(`✅ A user connected: ${socket.id}`);
 
@@ -73,7 +100,8 @@ io.on("connection", (socket) => {
             games[gameCode] = { 
                 board: getInitialBoard(), 
                 currentPlayer: 'B', 
-                players: {} // Ensure we properly track players
+                players: {}, // Ensure we properly track players
+                gameCode // Store gameCode in game object
             };
         }
     
@@ -98,6 +126,10 @@ io.on("connection", (socket) => {
             socket.emit('error', 'Game is full.');
             console.log(`⛔ User ${socket.id} tried to join a full game.`);
             return;
+        }
+
+        if (gameCode === 'computer') {
+            game.currentPlayer = 'B';
         }
     
         io.to(gameCode).emit('gameState', game);
@@ -125,7 +157,18 @@ io.on("connection", (socket) => {
 
         // Update board
         game.board = flipPieces(game.board, row, col, player, type, { B: [], W: [] });
-        game.currentPlayer = player === 'B' ? 'W' : 'B';
+        const nextPlayer = player === 'B' ? 'W' : 'B';
+        const nextValidMoves = calculateValidMoves(game.board, nextPlayer);
+        if (nextValidMoves.length > 0) {
+            game.currentPlayer = nextPlayer;
+        } else {
+            game.currentPlayer = player;
+            io.to(gameCode).emit('notification', `${nextPlayer === 'B' ? 'Black' : 'White'} has no valid moves, your turn again!`);
+        }
+
+        if (gameCode === 'computer' && game.currentPlayer === 'W') {
+            makeComputerMove(game);
+        }
 
         io.to(gameCode).emit('gameState', game);
     });

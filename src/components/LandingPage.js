@@ -31,6 +31,13 @@ const LandingPage = ({ setGameCode, setPlayerColor }) => {
     navigate(`/game/${createdCode}`);
   };
 
+  const startGameWithComputer = () => {
+    const gameCode = 'computer';
+    setGameCode(gameCode);
+    setPlayerColor('B'); // Player is always 'B' when playing against the computer
+    navigate(`/game/${gameCode}`);
+  };
+
   return (
       <div className="landing-page">
         <h1>Welcome to Othello with Duckies</h1>
@@ -54,6 +61,7 @@ const LandingPage = ({ setGameCode, setPlayerColor }) => {
             onChange={(e) => setCode(e.target.value)}
         />
         <button onClick={joinGame}>Join Game</button>
+        <button onClick={startGameWithComputer}>Play Against Computer</button>
       </div>
   );
 };
