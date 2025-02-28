@@ -19,10 +19,10 @@ const createNewBoard = () => {
 
 const getInitialBoard = () => {
     const board = createNewBoard();
-    board[3][3] = { type: 'regular', player: 'W' };
+    board[3][3] = { type: 'regular', player: 'R' };
     board[3][4] = { type: 'regular', player: 'B' };
     board[4][3] = { type: 'regular', player: 'B' };
-    board[4][4] = { type: 'regular', player: 'W' };
+    board[4][4] = { type: 'regular', player: 'R' };
     return board;
 };
 
@@ -33,8 +33,32 @@ const directions = [
   [-1, -1], [-1, 1], [1, -1], [1, 1]
 ];
 
+const isValidMove = (board, row, col, player, type) => {
+    if (board[row][col].player !== null) return false; // Cell must be empty
+    const opponent = player === 'B' ? 'R' : 'B';
+    let valid = false;
+
+    directions.forEach(([dx, dy]) => {
+        let x = row + dx;
+        let y = col + dy;
+        let hasOpponentBetween = false;
+
+        while (x >= 0 && x < 8 && y >= 0 && y < 8 && board[x][y].player === opponent) {
+            hasOpponentBetween = true;
+            x += dx;
+            y += dy;
+        }
+
+        if (hasOpponentBetween && x >= 0 && x < 8 && y >= 0 && y < 8 && board[x][y].player === player) {
+            valid = true;
+        }
+    });
+
+    return valid;
+};
+
 const flipPieces = (board, row, col, player, type, shieldedCells) => {
-    const opponent = player === 'B' ? 'W' : 'B';
+    const opponent = player === 'B' ? 'R' : 'B';
     const newBoard = board.map(row => row.slice());
   
     directions.forEach(([dx, dy]) => {
@@ -75,10 +99,10 @@ const calculateValidMoves = (board, player) => {
 };
 
 const makeComputerMove = (game) => {
-  const validMoves = calculateValidMoves(game.board, 'W');
+  const validMoves = calculateValidMoves(game.board, 'R');
   if (validMoves.length > 0) {
     const [row, col] = validMoves[Math.floor(Math.random() * validMoves.length)];
-    game.board = flipPieces(game.board, row, col, 'W', 'regular', { B: [], W: [] });
+    game.board = flipPieces(game.board, row, col, 'R', 'regular', { B: [], R: [] });
     game.currentPlayer = 'B';
     io.to(game.gameCode).emit('gameState', game); // Emit game state after computer move
   } else {
@@ -107,20 +131,20 @@ io.on("connection", (socket) => {
     
         const game = games[gameCode];
         // Check if the user is already in the game
-        if (game.players.B === socket.id || game.players.W === socket.id) {
+        if (game.players.B === socket.id || game.players.R === socket.id) {
             console.log(`⛔ User ${socket.id} is already in game ${gameCode}`);
             return;
         }
     
-        // Assign players strictly as 'B' or 'W'
+        // Assign players strictly as 'B' or 'R'
         if (!game.players.B) {
             game.players.B = socket.id;
             socket.emit('assignedColor', 'B');
-            console.log(`✅ User ${socket.id} assigned Black (B)`);
-        } else if (!game.players.W) {
-            game.players.W = socket.id;
-            socket.emit('assignedColor', 'W');
-            console.log(`✅ User ${socket.id} assigned White (W)`);
+            console.log(`✅ User ${socket.id} assigned Blue (B)`);
+        } else if (!game.players.R) {
+            game.players.R = socket.id;
+            socket.emit('assignedColor', 'R');
+            console.log(`✅ User ${socket.id} assigned Red (R)`);
         } else {
             // Reject extra players
             socket.emit('error', 'Game is full.');
@@ -156,17 +180,17 @@ io.on("connection", (socket) => {
         }
 
         // Update board
-        game.board = flipPieces(game.board, row, col, player, type, { B: [], W: [] });
-        const nextPlayer = player === 'B' ? 'W' : 'B';
+        game.board = flipPieces(game.board, row, col, player, type, { B: [], R: [] });
+        const nextPlayer = player === 'B' ? 'R' : 'B';
         const nextValidMoves = calculateValidMoves(game.board, nextPlayer);
         if (nextValidMoves.length > 0) {
             game.currentPlayer = nextPlayer;
         } else {
             game.currentPlayer = player;
-            io.to(gameCode).emit('notification', `${nextPlayer === 'B' ? 'Black' : 'White'} has no valid moves, your turn again!`);
+            io.to(gameCode).emit('notification', `${nextPlayer === 'B' ? 'Blue' : 'Red'} has no valid moves, your turn again!`);
         }
 
-        if (gameCode === 'computer' && game.currentPlayer === 'W') {
+        if (gameCode === 'computer' && game.currentPlayer === 'R') {
             makeComputerMove(game);
         }
 

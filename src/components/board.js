@@ -20,10 +20,10 @@ const directions = [
 ];
 
 const initialBoard = Array(8).fill(null).map(() => Array(8).fill({ type: 'empty', player: null }));
-initialBoard[3][3] = { type: 'regular', player: 'W' };
+initialBoard[3][3] = { type: 'regular', player: 'R' };
 initialBoard[3][4] = { type: 'regular', player: 'B' };
 initialBoard[4][3] = { type: 'regular', player: 'B' };
-initialBoard[4][4] = { type: 'regular', player: 'W' };
+initialBoard[4][4] = { type: 'regular', player: 'R' };
 
 const Board = () => {
   const { gameCode } = useParams();
@@ -31,11 +31,12 @@ const Board = () => {
   const [currentPlayer, setCurrentPlayer] = useState('B');
   const [validMoves, setValidMoves] = useState([]);
   const [selectedDucky, setSelectedDucky] = useState('regular');
-  const [blackCount, setBlackCount] = useState(2);
-  const [whiteCount, setWhiteCount] = useState(2);
-  const [shieldedCells, setShieldedCells] = useState({ B: [], W: [] });
+  const [blueCount, setBlueCount] = useState(2);
+  const [redCount, setRedCount] = useState(2);
+  const [shieldedCells, setShieldedCells] = useState({ B: [], R: [] });
+  const [shieldUsed, setShieldUsed] = useState({ B: false, R: false });
   const [selectedCell, setSelectedCell] = useState(null); // To highlight the cell where the bomb is placed
-  const [bombs, setBombs] = useState({ B: null, W: null });
+  const [bombs, setBombs] = useState({ B: null, R: null });
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState(null);
   const [assignedColor, setAssignedColor] = useState(null); // Store assigned color
@@ -68,21 +69,21 @@ const Board = () => {
   }, [gameCode]);
 
   const calculatePieceCount = (board) => {
-    let black = 0;
-    let white = 0;
+    let blue = 0;
+    let red = 0;
     board.forEach(row => {
       row.forEach(cell => {
-        if (cell.player === 'B') black++;
-        if (cell.player === 'W') white++;
+        if (cell.player === 'B') blue++;
+        if (cell.player === 'R') red++;
       });
     });
-    setBlackCount(black);
-    setWhiteCount(white);
+    setBlueCount(blue);
+    setRedCount(red);
   };
 
   const isValidMove = (board, row, col, player, type) => {
     if (board[row][col].player !== null) return false; // Cell must be empty
-    const opponent = player === 'B' ? 'W' : 'B';
+    const opponent = player === 'B' ? 'R' : 'B';
     let valid = false;
 
     directions.forEach(([dx, dy]) => {
@@ -117,7 +118,7 @@ const Board = () => {
   };
 
   const flipPieces = (board, row, col, player, type, shieldedCells) => {
-    const opponent = player === 'B' ? 'W' : 'B';
+    const opponent = player === 'B' ? 'R' : 'B';
     const newBoard = board.map(row => row.slice());
 
     directions.forEach(([dx, dy]) => {
@@ -166,11 +167,7 @@ const Board = () => {
   };
 
   const canGetShielded = (player, shieldedCells, row, col) => {
-    if (shieldedCells[player].length >= 1) {
-      showNotification('Can only use one shield!');
-      return false;
-    }
-    const opponent = player === 'B' ? 'W' : 'B';
+    const opponent = player === 'B' ? 'R' : 'B';
     if (board[row][col].player === opponent) {
       showNotification("Cannot shield opponent's cell!");
       return false;
@@ -182,10 +179,10 @@ const Board = () => {
     const isBoardFull = board.every(row => row.every(cell => cell.player !== null));
     if (isBoardFull) {
       setGameOver(true);
-      if (blackCount > whiteCount) {
-        setWinner('Black');
-      } else if (whiteCount > blackCount) {
-        setWinner('White');
+      if (blueCount > redCount) {
+        setWinner('Blue');
+      } else if (redCount > blueCount) {
+        setWinner('Red');
       } else {
         setWinner('Draw');
       }
@@ -197,11 +194,11 @@ const Board = () => {
     setCurrentPlayer('B');
     setValidMoves([]);
     setSelectedDucky('regular');
-    setBlackCount(2);
-    setWhiteCount(2);
-    setShieldedCells({ B: [], W: [] });
+    setBlueCount(2);
+    setRedCount(2);
+    setShieldedCells({ B: [], R: [] });
     setSelectedCell(null);
-    setBombs({ B: null, W: null });
+    setBombs({ B: null, R: null });
     setGameOver(false);
     setWinner(null);
   };
@@ -212,10 +209,10 @@ const Board = () => {
   }, [board, currentPlayer]);
 
   const makeComputerMove = () => {
-    const validMoves = calculateValidMoves(board, 'W');
+    const validMoves = calculateValidMoves(board, 'R');
     if (validMoves.length > 0) {
       const [row, col] = validMoves[Math.floor(Math.random() * validMoves.length)];
-      const newBoard = flipPieces(board, row, col, 'W', 'regular', shieldedCells);
+      const newBoard = flipPieces(board, row, col, 'R', 'regular', shieldedCells);
       setBoard(newBoard);
       calculatePieceCount(newBoard);
       setCurrentPlayer('B');
@@ -227,7 +224,7 @@ const Board = () => {
   };
 
   useEffect(() => {
-    if (gameCode === 'computer' && currentPlayer === 'W') {
+    if (gameCode === 'computer' && currentPlayer === 'R') {
       setTimeout(makeComputerMove, 1000); // Delay for computer move
     }
   }, [currentPlayer, gameCode]);
@@ -242,7 +239,7 @@ const Board = () => {
       showNotification("Opponent's turn!");
       return;
     }
-    if (gameCode === 'computer' && currentPlayer === 'W') {
+    if (gameCode === 'computer' && currentPlayer === 'R') {
       showNotification("Opponent's turn!");
       return;
     }
@@ -266,18 +263,25 @@ const Board = () => {
       setBoard(newBoard);
 
     } else if (selectedDucky === 'shield') {
+      if (!canGetShielded(currentPlayer, shieldedCells, row, col)) return;
+
       setShieldedCells((prev) => {
         const newShielded = [...prev[currentPlayer], [row, col]];
         console.log(`Shielded cells for ${currentPlayer}:`, newShielded);
 
         // Set the board piece color for shielded cells
-        const newBoard = board.map((rowArr, rowIndex) => rowArr.map((cell, colIndex) => {
-          if (rowIndex === row && colIndex === col) {
-            return { type: 'shield', player: currentPlayer };
-          }
-          return cell;
-        }));
+        const newBoard = board.map((rowArr, rowIndex) =>
+            rowArr.map((cell, colIndex) => {
+              if (rowIndex === row && colIndex === col) {
+                return { type: 'shield', player: currentPlayer };
+              }
+              return cell;
+            })
+        );
         setBoard(newBoard);
+
+        // Mark shield as used for the current player
+        setShieldUsed((prev) => ({ ...prev, [currentPlayer]: true }));
 
         // Change selected ducky back to 'regular' after placing a shield
         setSelectedDucky('regular');
@@ -295,12 +299,12 @@ const Board = () => {
       triggerExplosion(row, col, currentPlayer, board, setBoard); // Trigger explosion if bomb is stepped on
     }
 
-    const nextPlayer = currentPlayer === 'B' ? 'W' : 'B';
+    const nextPlayer = currentPlayer === 'B' ? 'R' : 'B';
     const nextValidMoves = calculateValidMoves(board, nextPlayer);
     if (nextValidMoves.length > 0) {
       setCurrentPlayer(nextPlayer);
     } else {
-      showNotification(`${nextPlayer === 'B' ? 'Black' : 'White'} has no valid moves, your turn again!`);
+      showNotification(`${nextPlayer === 'B' ? 'Blue' : 'Red'} has no valid moves, your turn again!`);
     }
     socket.emit('makeMove', { gameCode, move: { row, col, player: currentPlayer, type: selectedDucky } });
   };
@@ -344,45 +348,89 @@ const Board = () => {
 
   return (
       <div className="board-container">
-        {gameOver && (
-          <div className="game-over">
-            <h2>Game Over</h2>
-            <p>{winner === 'Draw' ? "It's a Draw!" : `${winner} Wins!`}</p>
-            <button onClick={restartGame}>Restart Game</button>
+        {/* Piece Count */}
+        <div className="piece-count">
+          <div>
+            <img
+                className="duckie-img"
+                src={'/images/blue_duckie.png'}
+                alt="Blue Ducky"
+            />
+            : {blueCount}
           </div>
+          <div>
+            <img
+                className="duckie-img"
+                src={'/images/red_duckie.png'}
+                alt="Red Ducky"
+            />
+            : {redCount}
+          </div>
+        </div>
+
+        {/* Game Over Message */}
+        {gameOver && (
+            <div className="game-over">
+              <h2>Game Over</h2>
+              <p>{winner === 'Draw' ? "It's a Draw!" : `${winner} Wins!`}</p>
+              <button onClick={restartGame}>Restart Game</button>
+            </div>
         )}
+
+        {/* Game Board */}
         <div className={`board ${gameOver ? 'disabled' : ''}`}>
           {board.map((row, rowIndex) =>
               row.map((_, colIndex) => renderCell(rowIndex, colIndex))
           )}
         </div>
-        <div className="piece-count">
-          <div>Black: {blackCount}</div>
-          <div>White: {whiteCount}</div>
-        </div>
+
+        {/* Ducky Selection */}
         <div className="ducky-selection">
+          {/* Regular Ducky */}
           <button
               onClick={() => setSelectedDucky('regular')}
               className={selectedDucky === 'regular' ? 'selected' : ''}
           >
-            <p className="button-text"> Regular Ducky </p>
-            <img className="button-img" src="/images/red_duckie.png" alt="Regular Ducky"/>
+            <p className="button-text">Regular Ducky</p>
+            <img
+                className="duckie-img"
+                src={assignedColor === 'B' ? '/images/blue_duckie.png' : '/images/red_duckie.png'}
+                alt="Regular Ducky"
+            />
           </button>
 
+          {/* Shield Ducky */}
           <button
-              onClick={() => setSelectedDucky('shield')}
-              className={selectedDucky === 'shield' ? 'selected' : ''}
+              onClick={() => {
+                if (shieldUsed[assignedColor]) {
+                  showNotification('You can only use the shield once!'); // Show notification if disabled
+                } else {
+                  setSelectedDucky('shield');
+                }
+              }}
+              className={`${selectedDucky === 'shield' ? 'selected' : ''} ${
+                  shieldUsed[assignedColor] ? 'disabled' : ''
+              }`}
           >
-            <p className="button-text"> Shield Ducky</p>
-            <img className="button-img" src="/images/red_shield_duckie.png" alt="Shield Ducky"/>
+            <p className="button-text">Shield Ducky</p>
+            <img
+                className="duckie-img"
+                src={assignedColor === 'B' ? '/images/blue_shield_duckie.png' : '/images/red_shield_duckie.png'}
+                alt="Shield Ducky"
+            />
           </button>
 
+          {/* Bomber Ducky */}
           <button
               onClick={() => setSelectedDucky('bomb')}
               className={selectedDucky === 'bomb' ? 'selected' : ''}
           >
-            <p className="button-text"> Bomber Ducky</p>
-            <img className="button-img" src="/images/red_bomb_duckie.png" alt="Bomber Ducky"/>
+            <p className="button-text">Bomber Ducky</p>
+            <img
+                className="duckie-img"
+                src={assignedColor === 'B' ? '/images/blue_bomb_duckie.png' : '/images/red_bomb_duckie.png'}
+                alt="Bomber Ducky"
+            />
           </button>
         </div>
 

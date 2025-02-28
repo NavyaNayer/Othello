@@ -18,7 +18,7 @@ const LandingPage = ({ setGameCode, setPlayerColor }) => {
 
   const joinGame = () => {
     setGameCode(code);
-    setPlayerColor('W');
+    setPlayerColor('R');
     navigate(`/game/${code}`);
   };
 
@@ -47,9 +47,9 @@ const LandingPage = ({ setGameCode, setPlayerColor }) => {
               <p>Game Code: {createdCode}</p>
               <button
                   onClick={copyToClipboard}
-                  style={{ backgroundColor: copied ? 'green' : '' }}
+                  style={{ backgroundColor: copied ? '#34b233' : '' }}
               >
-                {copied ? 'Copied!' : 'Copy Code'}
+                {copied ? '✓ Copied' : 'Copy Code'}
               </button>
               <button onClick={startGame}>Start Game</button>
             </div>

@@ -15,7 +15,7 @@ const Lobby = ({ setGameCode, setPlayerColor }) => {
 
   const joinGame = () => {
     setGameCode(code);
-    setPlayerColor('W');
+    setPlayerColor('R');
     navigate(`/game/${code}`);
   };
 
