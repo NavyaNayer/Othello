@@ -39,7 +39,7 @@ const Board = () => {
   const [bombs, setBombs] = useState({ B: null, R: null });
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState(null);
-  const [assignedColor, setAssignedColor] = useState(null); // Store assigned color
+  const [assignedColor, setAssignedColor] = useState(null);
 
   useEffect(() => {
     console.log('Joining game:', gameCode);
@@ -49,15 +49,24 @@ const Board = () => {
       setAssignedColor('B');
     }
 
+    // Sync shielded cells
+    socket.on('shieldsUpdated', (updatedShields) => {
+      console.log("Received updated shielded cells:", updatedShields);
+      setShieldedCells(updatedShields);
+    });
+
+    // Assign player color
     socket.on('assignedColor', (color) => {
       setAssignedColor(color);
       console.log(`Assigned color: ${color}`);
     });
 
+    // Receive game state updates
     socket.on('gameState', (gameState) => {
       console.log('Received game state:', gameState);
       setBoard(gameState.board);
       setCurrentPlayer(gameState.currentPlayer);
+      setShieldedCells(gameState.shieldedCells); // Sync shielded cells
       calculatePieceCount(gameState.board);
       setValidMoves(calculateValidMoves(gameState.board, gameState.currentPlayer));
     });
@@ -65,6 +74,7 @@ const Board = () => {
     return () => {
       socket.off('assignedColor');
       socket.off('gameState');
+      socket.off('shieldsUpdated');
     };
   }, [gameCode]);
 
@@ -127,9 +137,13 @@ const Board = () => {
       const piecesToFlip = [];
 
       while (x >= 0 && x < 8 && y >= 0 && y < 8 && board[x][y].player === opponent) {
-        // Skip shielded opponent's cells
-        if (!shieldedCells[opponent].some(([shieldRow, shieldCol]) => shieldRow === x && shieldCol === y)) {
+        const isShielded =
+            shieldedCells[opponent].some(([shieldRow, shieldCol]) => shieldRow === x && shieldCol === y);
+
+        if (!isShielded) {
           piecesToFlip.push([x, y]);
+        } else {
+          break;
         }
         x += dx;
         y += dy;
@@ -231,82 +245,104 @@ const Board = () => {
 
   const handleClick = (row, col) => {
     console.log(`handleClick: row=${row}, col=${col}, currentPlayer=${currentPlayer}, assignedColor=${assignedColor}`);
+
+    // Check if the cell is already occupied
     if (board[row][col].player !== null) {
       showNotification("This cell is already occupied!");
       return;
     }
+
+    // Check if it's the current player's turn
     if (currentPlayer !== assignedColor) {
-      showNotification("Opponent's turn!");
+      showNotification("It's your opponent's turn!");
       return;
     }
-    if (gameCode === 'computer' && currentPlayer === 'R') {
-      showNotification("Opponent's turn!");
-      return;
-    }
+
+    // Check if the move is valid
     const isValid = validMoves.some(([validRow, validCol]) => validRow === row && validCol === col);
     if (!isValid) {
-      showNotification("This is not a valid move!");
+      showNotification("Invalid move!");
       return;
     }
-    if (selectedDucky === 'shield' && !canGetShielded(currentPlayer, shieldedCells, row, col)) return;
-    if (selectedDucky === 'bomb') {
-      // Handle bomb placement
-      if (bombs[currentPlayer] !== null) {
-        showNotification("You can only place one bomb per game!");
-        return;
-      }
-      const newBombs = { ...bombs, [currentPlayer]: [row, col] };
-      setBombs(newBombs);
 
-      const newBoard = board.map(rowArr => rowArr.slice());
-      newBoard[row][col] = { type: 'bomb', player: currentPlayer }; // Place bomb on board
-      setBoard(newBoard);
+    const move = { row, col, player: currentPlayer, type: selectedDucky };
 
-    } else if (selectedDucky === 'shield') {
+    // Emit move to server
+    socket.emit('makeMove', { gameCode, move });
+
+    // Handle shield placement
+    if (selectedDucky === 'shield') {
       if (!canGetShielded(currentPlayer, shieldedCells, row, col)) return;
 
       setShieldedCells((prev) => {
-        const newShielded = [...prev[currentPlayer], [row, col]];
-        console.log(`Shielded cells for ${currentPlayer}:`, newShielded);
+        const updatedShields = {
+          ...prev,
+          [currentPlayer]: [...prev[currentPlayer], [row, col]]
+        };
+        console.log("Local shielded cells:", updatedShields);
 
-        // Set the board piece color for shielded cells
-        const newBoard = board.map((rowArr, rowIndex) =>
-            rowArr.map((cell, colIndex) => {
-              if (rowIndex === row && colIndex === col) {
-                return { type: 'shield', player: currentPlayer };
-              }
-              return cell;
-            })
-        );
-        setBoard(newBoard);
-
-        // Mark shield as used for the current player
-        setShieldUsed((prev) => ({ ...prev, [currentPlayer]: true }));
-
-        // Change selected ducky back to 'regular' after placing a shield
-        setSelectedDucky('regular');
-
-        return { ...prev, [currentPlayer]: newShielded };
+        // Emit updated shielded cells to the server
+        socket.emit('updateShieldedCells', { gameCode, shieldedCells: updatedShields });
+        return updatedShields;
       });
-    } else {
-      const newBoard = flipPieces(board, row, col, currentPlayer, selectedDucky, shieldedCells);
-      setBoard(newBoard);
-      calculatePieceCount(newBoard);
+
+      const updatedBoard = board.map((rowArr, rowIndex) =>
+          rowArr.map((cell, colIndex) => {
+            if (rowIndex === row && colIndex === col) {
+              return { type: 'shield', player: currentPlayer };
+            }
+            return cell;
+          })
+      );
+
+      setBoard(updatedBoard);
+      setShieldUsed((prev) => ({ ...prev, [currentPlayer]: true }));
+      setSelectedDucky('regular');
+      return; // Shield placement complete, no further processing needed
     }
 
-    // Check for bomb explosion
+    // Handle bomb placement
+    if (selectedDucky === 'bomb') {
+      if (bombs[currentPlayer] !== null) {
+        showNotification("You can only place one bomb!");
+        return;
+      }
+
+      const newBombs = { ...bombs, [currentPlayer]: [row, col] };
+      setBombs(newBombs);
+
+      const updatedBoard = board.map(rowArr => rowArr.slice());
+      updatedBoard[row][col] = { type: 'bomb', player: currentPlayer }; // Place bomb on board
+      setBoard(updatedBoard);
+
+      // Emit updated bomb state to the server
+      socket.emit('updateBombs', { gameCode, bombs: newBombs });
+
+      setSelectedDucky('regular'); // Reset selected ducky
+      return; // Bomb placement complete, no further processing needed
+    }
+
+    // Handle regular and other ducky moves (flip pieces)
+    const updatedBoard = flipPieces(board, row, col, currentPlayer, selectedDucky, shieldedCells);
+    setBoard(updatedBoard);
+    calculatePieceCount(updatedBoard);
+
+    // Check if the current move triggers a bomb explosion
     if (bombs[currentPlayer] && [row, col].toString() === bombs[currentPlayer].toString()) {
       triggerExplosion(row, col, currentPlayer, board, setBoard); // Trigger explosion if bomb is stepped on
     }
 
+    // Determine the next player and set valid moves
     const nextPlayer = currentPlayer === 'B' ? 'R' : 'B';
-    const nextValidMoves = calculateValidMoves(board, nextPlayer);
+    const nextValidMoves = calculateValidMoves(updatedBoard, nextPlayer);
     if (nextValidMoves.length > 0) {
       setCurrentPlayer(nextPlayer);
     } else {
       showNotification(`${nextPlayer === 'B' ? 'Blue' : 'Red'} has no valid moves, your turn again!`);
     }
-    socket.emit('makeMove', { gameCode, move: { row, col, player: currentPlayer, type: selectedDucky } });
+
+    // Emit the move to the server
+    socket.emit('makeMove', { gameCode, move });
   };
 
   const renderCell = (row, col) => {
