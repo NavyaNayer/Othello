@@ -2,6 +2,8 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow-y: hidden;
+  overflow-x: hidden;
 }
 
 .board-container {
@@ -28,7 +30,7 @@ html, body {
   padding: 2px;
   grid-template-columns: repeat(8, 50px);
   grid-template-rows: repeat(8, 50px);
-  border: 3px solid #1B4C72;
+  border: 4px solid #1B4C72;
   background-color: rgba(88, 166, 198, 0.2); /* Change this value to adjust transparency */
   border-radius: 5px;
 }
@@ -42,7 +44,7 @@ html, body {
 .piece-count div {
   display: flex;
   align-items: center;
-  background-color: rgba(88, 166, 198, 0.5);
+  background-color: rgba(118, 180, 205, 0.688);
   font-weight: bold;
   color: #ffcc00;
   padding: 5px;
@@ -57,7 +59,7 @@ html, body {
 .cell {
   width: 50px;
   height: 50px;
-  border: 1px solid #ccc;
+  border: 2px solid #ccc;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -216,4 +218,37 @@ html, body {
 @keyframes fadeOut {
   0% { opacity: 1; }
   100% { opacity: 0; }
+}
+
+.top-buttons {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  gap: 10px;
+  background-color:none; 
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.top-buttons button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.icon-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #ffcc00; /* Button background color */
+  border: 2px solid #ff9900;
+  border-radius: 5px;
+  transition: all 0.2s ease-in-out;
+}
+
+.icon-button:hover {
+  background-color: #ffaa00;
+  border-color: #ff7700;
+  transform: scale(1.1);
 }

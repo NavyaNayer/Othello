@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import './board.css';
 import { placeBomb, triggerExplosion, checkForBomb } from '../logic/bomberLogic';
@@ -27,6 +27,7 @@ initialBoard[4][4] = { type: 'regular', player: 'R' };
 
 const Board = () => {
   const { gameCode } = useParams();
+  const navigate = useNavigate();
   const [board, setBoard] = useState(initialBoard);
   const [currentPlayer, setCurrentPlayer] = useState('B');
   const [validMoves, setValidMoves] = useState([]);
@@ -384,6 +385,21 @@ const Board = () => {
 
   return (
       <div className="board-container">
+        {/* Top Buttons */}
+        <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      />
+      
+      <div className="top-buttons">
+        <button className="icon-button" title="Home" onClick={() => navigate('/')}> 
+          <span className="material-icons">home</span>
+        </button>
+        <button className="icon-button" title="Restart" onClick={restartGame}> 
+          <span className="material-icons">restart_alt</span>
+        </button>
+      </div>
+
         {/* Piece Count */}
         <div className="piece-count">
           <div>
