@@ -136,3 +136,29 @@ h1 {
   outline: none;
   border-color: #ff9900;
 }
+
+.shifu-button {
+  font-size: 18px;
+  padding: 12px 18px;
+  font-weight: bold;
+  background-color: #ffcc00;
+  border: 2px solid #ff9900;
+  border-radius: 7px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Spacing between text and image */
+  transition: all 0.2s ease-in-out;
+}
+
+.shifu-img {
+  width: 30px; /* Adjust size as needed */
+  height: 30px;
+  border-radius: 50%;
+}
+
+.shifu-button:hover {
+  background-color: #ffaa00;
+  border-color: #ff7700;
+  transform: scale(1.1);
+}

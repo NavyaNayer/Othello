@@ -33,8 +33,8 @@ const LandingPage = ({ setGameCode, setPlayerColor }) => {
     navigate(`/game/${createdCode}`);
   };
 
-  const startGameWithComputer = () => {
-    const gameCode = "computer";
+  const startGameWithShifu = () => {
+    const gameCode = "shifu";
     setGameCode(gameCode);
     setPlayerColor("B");
     navigate(`/game/${gameCode}`);
@@ -72,8 +72,9 @@ const LandingPage = ({ setGameCode, setPlayerColor }) => {
         🔗 Join Game
       </button>
 
-      <button className="computer-button" onClick={startGameWithComputer}>
-        🤖 Play Against Computer
+      <button className="shifu-button" onClick={startGameWithShifu}>
+      <img src={`${process.env.PUBLIC_URL}/images/Shifu.jpg`} alt="Shifu" className="shifu-img" />
+        Play Against Shifu
       </button>
     </div>
   );
