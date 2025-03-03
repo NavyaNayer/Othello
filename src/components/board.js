@@ -26,6 +26,9 @@ initialBoard[4][3] = { type: 'regular', player: 'B' };
 initialBoard[4][4] = { type: 'regular', player: 'R' };
 
 const shifuImage = 'public/images/Shifu.jpg';
+const compliments = ["Impressive move!", "You're getting the hang of this!", "Well done!"];
+const sarcasm = ["Is that all you've got?", "Even a duck could do better!", "Shifu is unimpressed..."];
+
 
 const Board = () => {
   const { gameCode } = useParams();
@@ -43,6 +46,7 @@ const Board = () => {
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState(null);
   const [assignedColor, setAssignedColor] = useState(null);
+  const [shifuComment, setShifuComment] = useState('');
 
   useEffect(() => {
     console.log('Joining game:', gameCode);
@@ -81,6 +85,9 @@ const Board = () => {
     };
   }, [gameCode]);
 
+  const [prevBlueCount, setPrevBlueCount] = useState(2);
+  const [prevRedCount, setPrevRedCount] = useState(2);
+
   const calculatePieceCount = (board) => {
     let blue = 0;
     let red = 0;
@@ -90,6 +97,8 @@ const Board = () => {
         if (cell.player === 'R') red++;
       });
     });
+    setPrevBlueCount(blueCount); // Store previous counts
+    setPrevRedCount(redCount);
     setBlueCount(blue);
     setRedCount(red);
   };
@@ -226,6 +235,28 @@ const Board = () => {
   }, [board, currentPlayer]);
 
   const makeComputerMove = () => {
+    const userGain = blueCount - prevBlueCount;
+    const shifuGain = redCount - prevRedCount;
+
+    const randomCompliment = compliments[Math.floor(Math.random() * compliments.length)];
+    const randomSarcasm = sarcasm[Math.floor(Math.random() * sarcasm.length)];
+
+    if (shifuGain > userGain) {
+      console.log('Shifu Comment (Shifu gains more pieces):', randomSarcasm);
+      setShifuComment(`😏 ${randomSarcasm}`);
+    } else if (userGain > shifuGain) {
+      console.log('Shifu Comment (User gains more pieces):', randomCompliment);
+      setShifuComment(`👏 ${randomCompliment}`);
+    } else {
+      console.log('Shifu Comment (Tie): Seems like we are evenly matched...');
+      setShifuComment('🤔 Seems like we are evenly matched...');
+    }
+
+    // Clear Shifu's comment after 5 seconds
+    setTimeout(() => {
+      setShifuComment('');
+    }, 5000);
+
     const validMoves = calculateValidMoves(board, 'R');
     if (validMoves.length > 0) {
       const [row, col] = validMoves[Math.floor(Math.random() * validMoves.length)];
@@ -241,7 +272,7 @@ const Board = () => {
   };
 
   useEffect(() => {
-    if (gameCode === 'computer' && currentPlayer === 'R') {
+    if (gameCode === 'shifu' && currentPlayer === 'R') {
       setTimeout(makeComputerMove, 1000); // Delay for computer move
     }
   }, [currentPlayer, gameCode]);
@@ -272,6 +303,10 @@ const Board = () => {
 
     // Emit move to server
     socket.emit('makeMove', { gameCode, move });
+
+    // Store previous counts before making the move
+    setPrevBlueCount(blueCount);
+    setPrevRedCount(redCount);
 
     // Handle shield placement
     if (selectedDucky === 'shield') {
@@ -329,6 +364,33 @@ const Board = () => {
     const updatedBoard = flipPieces(board, row, col, currentPlayer, selectedDucky, shieldedCells);
     setBoard(updatedBoard);
     calculatePieceCount(updatedBoard);
+
+    // Determine piece gains for user and Shifu
+    const userGain = blueCount - prevBlueCount;
+    const shifuGain = redCount - prevRedCount;
+
+    // Randomize comments
+    const randomCompliment = compliments[Math.floor(Math.random() * compliments.length)];
+    const randomSarcasm = sarcasm[Math.floor(Math.random() * sarcasm.length)];
+
+    // Set Shifu's speech bubble comment
+    if (userGain > shifuGain) {
+      console.log('Shifu Comment (user gains more pieces):', randomCompliment);
+      setShifuComment(`👏 ${randomCompliment}`);
+    } else if (shifuGain > userGain) {
+      console.log('Shifu Comment (Shifu gains more pieces):', randomSarcasm);
+      setShifuComment(`😏 ${randomSarcasm}`);
+    } else {
+      console.log('Shifu Comment (Tie): A tie? Is that all you got?');
+      setShifuComment('🤔 A tie? Is that all you got?');
+    }
+
+    // Clear the comment after 5 seconds
+    setTimeout(() => {
+      setShifuComment('');
+    }, 5000);
+
+
 
     // Check if the current move triggers a bomb explosion
     if (bombs[currentPlayer] && [row, col].toString() === bombs[currentPlayer].toString()) {
@@ -437,9 +499,13 @@ const Board = () => {
                 alt="Shifu Opponent"
               />
               <p className="shifu-label">Shifu Opponent</p>
+              <div className={`shifu-speech-bubble ${shifuComment ? 'visible' : 'hidden'}`}>
+                <p>{shifuComment}</p>
+              </div>
             </div>
           </div>
         )}
+
 
 
         {/* Game Over Message */}
