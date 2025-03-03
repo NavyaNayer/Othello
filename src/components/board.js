@@ -25,6 +25,8 @@ initialBoard[3][4] = { type: 'regular', player: 'B' };
 initialBoard[4][3] = { type: 'regular', player: 'B' };
 initialBoard[4][4] = { type: 'regular', player: 'R' };
 
+const shifuImage = 'public/images/Shifu.jpg';
+
 const Board = () => {
   const { gameCode } = useParams();
   const navigate = useNavigate();
@@ -46,7 +48,7 @@ const Board = () => {
     console.log('Joining game:', gameCode);
     socket.emit('joinGame', { gameCode });
 
-    if (gameCode === 'computer') {
+    if (gameCode === 'shifu') {
       setAssignedColor('B');
     }
 
@@ -369,6 +371,8 @@ const Board = () => {
         imageSrc = '/images/red_shield_duckie.png';
       } else if (piece.type === 'bomb') {
         imageSrc = '/images/red_bomb_duckie.png';
+      } else if (piece.player === 'R') {
+        imageSrc = gameCode === 'shifu' ? shifuImage : 'public/images/Shifu.jpg';
       }
     }
 
