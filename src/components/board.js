@@ -26,8 +26,9 @@ initialBoard[4][3] = { type: 'regular', player: 'B' };
 initialBoard[4][4] = { type: 'regular', player: 'R' };
 
 const shifuImage = 'public/images/Shifu.jpg';
-const compliments = ["Impressive move!", "You're getting the hang of this!", "Well done!"];
-const sarcasm = ["Is that all you've got?", "Even a duck could do better!", "Shifu is unimpressed..."];
+const compliments = ["Impressive move!", "You're getting the hang of this!", "Well done!", "Okay, show off.", "Beginner's luck? Or did you sell your soul for this?"
+, "I think you're enjoying this a little too much."];
+const sarcasm = ["Is that all you've got?", "Even a duck could do better!", "Shifu is unimpressed...", "Calculating your master plan... or just randomly clicking?", "Ah yes, the classic 'hope for the best' tactic."];
 
 
 const Board = () => {
@@ -238,18 +239,24 @@ const Board = () => {
     const userGain = blueCount - prevBlueCount;
     const shifuGain = redCount - prevRedCount;
 
+    console.log(userGain);
+    console.log(shifuGain);
     const randomCompliment = compliments[Math.floor(Math.random() * compliments.length)];
     const randomSarcasm = sarcasm[Math.floor(Math.random() * sarcasm.length)];
 
     if (shifuGain > userGain) {
       console.log('Shifu Comment (Shifu gains more pieces):', randomSarcasm);
       setShifuComment(`😏 ${randomSarcasm}`);
+      showNotification(shifuComment);
+      
     } else if (userGain > shifuGain) {
       console.log('Shifu Comment (User gains more pieces):', randomCompliment);
       setShifuComment(`👏 ${randomCompliment}`);
+      showNotification(shifuComment);
     } else {
       console.log('Shifu Comment (Tie): Seems like we are evenly matched...');
       setShifuComment('🤔 Seems like we are evenly matched...');
+      showNotification(shifuComment);
     }
 
     // Clear Shifu's comment after 5 seconds
