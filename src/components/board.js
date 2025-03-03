@@ -404,25 +404,43 @@ const Board = () => {
         </button>
       </div>
 
-        {/* Piece Count */}
-        <div className="piece-count">
-          <div>
-            <img
-                className="duckie-img"
-                src={'/images/blue_duckie.png'}
-                alt="Blue Ducky"
-            />
-            : {blueCount}
-          </div>
-          <div>
-            <img
-                className="duckie-img"
-                src={'/images/red_duckie.png'}
-                alt="Red Ducky"
-            />
-            : {redCount}
+        {/* Piece Count*/}
+        <div className="piece-count-container">
+          {/* Piece Count */}
+          <div className="piece-count">
+            <div>
+              <img
+                  className="duckie-img"
+                  src={'/images/blue_duckie.png'}
+                  alt="Blue Ducky"
+              />
+              : {blueCount}
+            </div>
+            <div>
+              <img
+                  className="duckie-img"
+                  src={'/images/red_duckie.png'}
+                  alt="Red Ducky"
+              />
+              : {redCount}
+            </div>
           </div>
         </div>
+
+        {/* Shifu (centered) */}
+        {gameCode === 'shifu' && (
+          <div className="shifu-center-container">
+            <div className="shifu-container">
+              <img
+                className="shifu-img"
+                src={`${process.env.PUBLIC_URL}/images/Shifu.jpg`}
+                alt="Shifu Opponent"
+              />
+              <p className="shifu-label">Shifu Opponent</p>
+            </div>
+          </div>
+        )}
+
 
         {/* Game Over Message */}
         {gameOver && (
